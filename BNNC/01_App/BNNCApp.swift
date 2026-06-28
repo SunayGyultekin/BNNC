@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct BNNCApp: App {
+    // MARK: Properties
+    private let container = DIContainer()
+
+    // MARK: Body
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppCoordinator(container: container)
         }
     }
 }
