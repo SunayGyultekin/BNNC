@@ -13,8 +13,6 @@ struct AppCoordinator: View {
     
     // MARK: Body
     var body: some View {
-        NavigationStack {
-            ItemsView(viewModel: container.makeItemsViewModel())
-        }
+        ItemsView(viewModel: container.makeItemsViewModel())
     }
 }

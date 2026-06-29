@@ -27,6 +27,6 @@ final class ItemsLocalDataSource: ItemsLocalDataSourceProtocol {
     }
     
     func saveItems(_ items: [BinanceItemDTO]) async throws {
-        try await actor.save(items: items)
+        try await actor.synchronize(items: items)
     }
 }

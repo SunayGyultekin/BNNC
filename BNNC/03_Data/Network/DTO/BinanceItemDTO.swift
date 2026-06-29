@@ -25,12 +25,11 @@ struct BinanceItemDTO: Codable {
     let lowPrice: String
     let volume: String
     let quoteVolume: String
-    let openTime: Int
-    let closeTime: Int
+    let openTime: Int64
+    let closeTime: Int64
     let firstId: Int
     let lastId: Int
     let count: Int
-    let updatedAt: Date = Date()
 }
 
 extension BinanceItemDTO {
@@ -55,7 +54,8 @@ extension BinanceItemDTO {
                            closeTime: closeTime,
                            firstId: firstId,
                            lastId: lastId,
-                           count: count)
+                           count: count,
+                           percentageColor: priceChangePercent.getChangeColor())
     }
     
     func toEntity() -> BinanceItemEntity {
@@ -79,7 +79,6 @@ extension BinanceItemDTO {
                                  closeTime: closeTime,
                                  firstId: firstId,
                                  lastId: lastId,
-                                 count: count,
-                                 updatedAt: updatedAt)
+                                 count: count)
     }
 }

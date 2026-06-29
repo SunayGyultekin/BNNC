@@ -26,11 +26,10 @@ final class GetItemsUseCase: GetItemsUseCaseProtocol {
                 do {
                     let cachedItems = try await repository.getCachedItems()
                     continuation.yield(cachedItems)
-                    print("cached items: \(cachedItems.count)")
+                    
                     let remoteItems = try await repository.refreshItems()
                     continuation.yield(remoteItems)
                     
-                    print("remote items: \(remoteItems.count)")
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)

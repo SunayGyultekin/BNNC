@@ -11,33 +11,35 @@ import SwiftData
 @ModelActor
 actor DatabaseActor {
     func fetchItems() throws -> [BinanceItemEntity] {
-        let descriptor = FetchDescriptor<BinanceItemEntity>(sortBy: [SortDescriptor(\.updatedAt)])
+        let descriptor = FetchDescriptor<BinanceItemEntity>()
         return try modelContext.fetch(descriptor)
     }
     
-    func save(items: [BinanceItemDTO]) throws {
-        // One database query
-        let existing = try modelContext.fetch(
+    func synchronize(items: [BinanceItemDTO]) async throws {
+        let localItems = try modelContext.fetch(
             FetchDescriptor<BinanceItemEntity>()
         )
         // O(1) lookup
-        var existingBySymbol = Dictionary(
-            uniqueKeysWithValues: existing.map { ($0.symbol, $0) }
+        var localItemsBySymbol = Dictionary(
+            uniqueKeysWithValues: localItems.map { ($0.symbol, $0) }
         )
 
+        let remoteSymbols = Set(items.map(\.symbol))
+        
         for dto in items {
-            if let entity = existingBySymbol[dto.symbol] {
-                entity.updatedAt = dto.updatedAt
-                // Update only if necessary
-                if entity.symbol != dto.symbol {
-                    entity.symbol = dto.symbol
-                }
+            if let entity = localItemsBySymbol[dto.symbol] {
+                entity.apply(dto)
             } else {
-                let entity = dto.toEntity()
+                let entity = await dto.toEntity()
                 modelContext.insert(entity)
-                existingBySymbol[dto.symbol] = entity
+                localItemsBySymbol[dto.symbol] = entity
             }
         }
+        
+        for entity in localItems where !remoteSymbols.contains(entity.symbol) {
+            modelContext.delete(entity)
+        }
+        
         try modelContext.save()
     }
 }

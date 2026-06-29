@@ -18,35 +18,47 @@ struct ItemsView: View {
     
     // MARK: Body
     var body: some View {
-        content
-            .navigationTitle("Items")
-            .task {
-                await viewModel.load()
-            }
-            .refreshable {
-                await viewModel.refresh()
-            }
+        NavigationStack {
+            content
+                .navigationTitle("Items")
+                .task {
+                    await viewModel.loadIfNeeded()
+                }
+                .refreshable {
+                    await viewModel.refresh()
+                }
+        }
     }
     
     @ViewBuilder
-    
     private var content: some View {
-        switch viewModel.viewState {
-        case .idle:
-            EmptyView()
-        case .loading:
+        switch viewModel.state {
+        case .idle, .loading:
             ProgressView()
+                .controlSize(.large)
         case .empty:
             ContentUnavailableView("No Items",
                                    systemImage: "tray")
         case .failed(let error):
             Text(error.localizedDescription)
         case .loaded(let items):
-            List(items) {
-                ItemRowView(item: $0)
+            ScrollViewReader { proxy in
+                List(items, id: \.self) { item in
+                    NavigationLink(value: item) {
+                        ItemRowView(item: item)
+                    }
+                }
+                .navigationDestination(for: BinanceItem.self) { selectedItem in
+                    ItemDetailsView(item: selectedItem)
+                }
             }
+            
         }
     }
+    
+    let backgroundGradient = LinearGradient(colors: [Color.gray, Color.white],
+                                            startPoint: .top,
+                                            endPoint: .bottom)
 }
 
 
@@ -59,13 +71,18 @@ struct ItemRowView: View {
         VStack {
             HStack {
                 Text(item.symbol)
+                    .font(.headline)
                 Spacer()
-                Text(item.priceChangePercent)
+                Text(item.priceChangePercent.toFormattedPercent() ?? "")
+                    .font(.headline)
+                    .foregroundStyle(item.percentageColor)
             }
             HStack {
-                Text("bid/ask")
+                Text("bid/ask:")
+                    .font(.subheadline)
                 Spacer()
                 Text("\(item.bidPrice)/\(item.askPrice)")
+                    .font(.subheadline)
             }
         }
     }

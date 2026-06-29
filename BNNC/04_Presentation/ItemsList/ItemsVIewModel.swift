@@ -10,9 +10,10 @@ internal import Combine
 
 @MainActor
 final class ItemsVIewModel: ObservableObject {
-    @Published var viewState: ViewState<[BinanceItem]> = .empty
+    @Published var state: ViewState<[BinanceItem]> = .idle
     private let getItemsUseCase: GetItemsUseCaseProtocol
     private var loadTask: Task<Void, Never>?
+    private var hasReceivedFirstValue = false
     
     // MARK: Init and Deinit
     init(getItemsUseCase: GetItemsUseCaseProtocol) {
@@ -24,33 +25,30 @@ final class ItemsVIewModel: ObservableObject {
     }
     
     // MARK: Methods
-    func load() async {
+    func loadIfNeeded(forceLoad: Bool = false) async {
+        guard forceLoad || { if case .idle = state { return true } else { return false } }() else { return }
+        
         loadTask?.cancel()
 
         loadTask = Task<Void, Never> {
-            viewState = .loading
-            
+            if !hasReceivedFirstValue {
+                state = .loading
+            }
             do {
-                var hasReceivedFirstValue = false
                 let stream = await getItemsUseCase.execute()
                 for try await items in stream {
-                    self.viewState = .loaded(items)
-                    // Stop showing the loading indicator as soon as
-                    // the first value (typically the cache) arrives.
-                    if !hasReceivedFirstValue {
-                        self.viewState = .loaded(items)
-                        hasReceivedFirstValue = true
-                    }
+                    state = .loaded(items)
+                    hasReceivedFirstValue = true
                 }
             } catch is CancellationError {
                 // Ignore cancellation
             } catch {
-                self.viewState = .failed(error)
+                state = .failed(error)
             }
         }
     }
 
     func refresh() async {
-        await load()
+        await loadIfNeeded(forceLoad: true)
     }
 }
