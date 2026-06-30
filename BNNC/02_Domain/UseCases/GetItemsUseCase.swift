@@ -6,7 +6,7 @@
 //
 
 protocol GetItemsUseCaseProtocol {
-    func execute() async -> AsyncThrowingStream<[BinanceItem], Error>
+    func execute() -> AsyncThrowingStream<[BinanceItem], Error>
 }
 
 
@@ -27,7 +27,7 @@ final class GetItemsUseCase: GetItemsUseCaseProtocol {
                     let cachedItems = try await repository.getCachedItems()
                     continuation.yield(cachedItems)
                     
-                    let remoteItems = try await repository.refreshItems()
+                    let remoteItems = try await repository.getRemoteItemsAndSync()
                     continuation.yield(remoteItems)
                     
                     continuation.finish()

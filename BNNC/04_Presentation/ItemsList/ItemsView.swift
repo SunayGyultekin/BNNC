@@ -9,10 +9,10 @@ import SwiftUI
 
 struct ItemsView: View {
     // MARK: Properties
-    @ObservedObject private var viewModel: ItemsVIewModel
+    @ObservedObject private var viewModel: ItemsViewModel
     
     // MARK: Init
-    init(viewModel: ItemsVIewModel) {
+    init(viewModel: ItemsViewModel) {
         self.viewModel = viewModel
     }
     
@@ -27,38 +27,45 @@ struct ItemsView: View {
                 .refreshable {
                     await viewModel.refresh()
                 }
+                .overlay(loadingOverlay)
+                .alert("ERROR", isPresented: $viewModel.showError) {
+                    Button("OK", role: .cancel) { viewModel.showError = false }
+                } message: {
+                    Text(viewModel.error?.localizedDescription ?? "")
+                }
+        }
+    }
+    
+    private var itemsList: some View {
+        ScrollViewReader { proxy in
+            List(viewModel.items, id: \.self) { item in
+                NavigationLink(value: item) {
+                    ItemRowView(item: item)
+                }
+            }
+            .navigationDestination(for: BinanceItem.self) { selectedItem in
+                ItemDetailsView(item: selectedItem)
+            }
         }
     }
     
     @ViewBuilder
     private var content: some View {
-        switch viewModel.state {
-        case .idle, .loading:
-            ProgressView()
-                .controlSize(.large)
-        case .empty:
+        if viewModel.items.isEmpty {
             ContentUnavailableView("No Items",
                                    systemImage: "tray")
-        case .failed(let error):
-            Text(error.localizedDescription)
-        case .loaded(let items):
-            ScrollViewReader { proxy in
-                List(items, id: \.self) { item in
-                    NavigationLink(value: item) {
-                        ItemRowView(item: item)
-                    }
-                }
-                .navigationDestination(for: BinanceItem.self) { selectedItem in
-                    ItemDetailsView(item: selectedItem)
-                }
-            }
-            
+        } else {
+            itemsList
         }
     }
     
-    let backgroundGradient = LinearGradient(colors: [Color.gray, Color.white],
-                                            startPoint: .top,
-                                            endPoint: .bottom)
+    @ViewBuilder
+    private var loadingOverlay: some View {
+        if viewModel.isLoading {
+            ProgressView()
+                .controlSize(.large)
+        }
+    }
 }
 
 

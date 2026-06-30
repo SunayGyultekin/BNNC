@@ -24,7 +24,7 @@ final class ItemsRepository: ItemsRepositoryProtocol {
         try await local.fetchItems()
     }
     
-    func refreshItems() async throws -> [BinanceItem] {
+    func getRemoteItemsAndSync() async throws -> [BinanceItem] {
         let remoteItems = try await remote.fetchItems()
         try await local.saveItems(remoteItems)
         return try await local.fetchItems()

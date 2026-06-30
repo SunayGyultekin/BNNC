@@ -8,5 +8,5 @@
 protocol ItemsRepositoryProtocol {
     // MARK: Methods
     func getCachedItems() async throws -> [BinanceItem]
-    func refreshItems() async throws -> [BinanceItem]
+    func getRemoteItemsAndSync() async throws -> [BinanceItem]
 }

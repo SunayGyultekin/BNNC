@@ -55,7 +55,7 @@ final class DIContainer {
     }
     
     // MARK: ViewModels
-    func makeItemsViewModel() -> ItemsVIewModel {
-        ItemsVIewModel(getItemsUseCase: makeItemsUseCase())
+    func makeItemsViewModel() -> ItemsViewModel {
+        ItemsViewModel(getItemsUseCase: makeItemsUseCase())
     }
 }
